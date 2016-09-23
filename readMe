@@ -1,0 +1,2 @@
+ 1. 支持hibernate 5.2.2， 但仅限于 @Cache(usage=CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)于 但仅限于模式， 因为 因为程序中 因为程序中并没有 
+ 2.  
