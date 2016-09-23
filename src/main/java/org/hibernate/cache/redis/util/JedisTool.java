@@ -16,17 +16,6 @@
 
 package org.hibernate.cache.redis.util;
 
-import org.hibernate.boot.spi.SessionFactoryOptions;
-import org.hibernate.cache.redis.jedis.JedisClient;
-import org.hibernate.cache.redis.timestamper.JedisCacheTimestamper;
-import org.hibernate.cache.redis.timestamper.JedisCacheTimestamperJvmImpl;
-import org.hibernate.cfg.Environment;
-import org.hibernate.cfg.Settings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import redis.clients.jedis.*;
-import redis.clients.util.Pool;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -35,6 +24,22 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+
+import org.hibernate.boot.spi.SessionFactoryOptions;
+import org.hibernate.cache.redis.DataSourceContextHolderKey;
+import org.hibernate.cache.redis.jedis.JedisClient;
+import org.hibernate.cache.redis.timestamper.JedisCacheTimestamper;
+import org.hibernate.cache.redis.timestamper.JedisCacheTimestamperJvmImpl;
+import org.hibernate.cfg.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.JedisSentinelPool;
+import redis.clients.jedis.Protocol;
+import redis.clients.util.Pool;
 
 /**
  * Jedis Helper class
@@ -48,7 +53,11 @@ public final class JedisTool {
     private static final String EXPIRY_PROPERTY_PREFIX = EXPIRE_IN_SECONDS + ".";
     private static final String FILE_URL_PREFIX = "file:";
     public static final String TIMESTAMPER_PROPERTY_KEY = "redis.timestamper.class";
+    public static final Class<?> DEFAULT_DYNAMIC_KEY_CLASS = DataSourceContextHolderKey.class;
+    public static final String DYNAMIC_KEY_CLASS = "redis.dynamicKey.class";
     public static final Class<?> DEFAULT_TIMESTAMPER_CLASS = JedisCacheTimestamperJvmImpl.class;
+    
+    
     private static final Logger log = LoggerFactory.getLogger(JedisTool.class);
 
     private JedisTool() { }
@@ -59,7 +68,7 @@ public final class JedisTool {
     public static JedisClient createJedisClient(Properties props) {
         log.info("Creating JedisClient.");
 
-        return new JedisClient(createJedisPool(props), getDefaultExpireInSeconds(props));
+        return new JedisClient(createJedisPool(props), getDefaultExpireInSeconds(props), getSourceContextHolderKey(props));
     }
 
     /**
@@ -177,5 +186,25 @@ public final class JedisTool {
             return JedisClient.DEFAULT_EXPIRY_IN_SECONDS;
 
         return Integer.decode(props.getProperty(EXPIRE_IN_SECONDS, String.valueOf(JedisClient.DEFAULT_EXPIRY_IN_SECONDS)));
+    }
+    
+    /**
+     * Get the default expire time from the supplied properties
+     *
+     * @param props   properties containing expiration settings
+     * @return expiry in seconds
+     */
+    private static DataSourceContextHolderKey getSourceContextHolderKey(final Properties props) {
+    	
+    	if (props == null)
+            return null;
+    	
+    	String className = props.getProperty(DYNAMIC_KEY_CLASS, DEFAULT_DYNAMIC_KEY_CLASS.getName());
+    	try {
+			return (DataSourceContextHolderKey) Class.forName(className).newInstance();
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return null;
+		}
     }
 }

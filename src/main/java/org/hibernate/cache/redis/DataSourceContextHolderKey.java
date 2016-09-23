@@ -1,5 +1,8 @@
 package org.hibernate.cache.redis;
 
-public interface DataSourceContextHolderKey {
-	String getKey();
+public class DataSourceContextHolderKey {
+	
+	public String getKey() {
+		return "";
+	}
 }
