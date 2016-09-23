@@ -1,2 +1,8 @@
- 1. 支持hibernate 5.2.2， 但仅限于 @Cache(usage=CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)于 但仅限于模式， 因为 因为程序中 因为程序中并没有 
- 2.  
+ 1. 支持hibernate 5.2.2，但仅限于 nonstrict-read-write|read-only模式，因为程序中并没有完成锁部分的逻辑代码
+ 1. support hibernate 5.2.2，but only nonstrict-read-write|read-only mode，because there is no code for lock!
+ 
+ 2. hibernate配置中需添加 [hibernate.cache.provider_configuration_file_resource_path] 指定hibernate-redis的配置文件路径{APath}
+ 2. hibernate conf file add [hibernate.cache.provider_configuration_file_resource_path] to figure out the conf file path [APath] of hibernate-redis
+ 
+ 3. {APath}中可添加redis.dynamicKey.class，用以动态生成redis的key值，此处是为了处理spring中使用动态数据源产生的缓存冲突问题
+ 3. {APath} may add [redis.dynamicKey.class]，so that you can generate the key of redis dynamically, this is for the situation that my project use dynamic datasource of Spring, and to solve the confict between diferrece datasource 
